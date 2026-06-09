@@ -1,5 +1,7 @@
 # Agro Coop - Sistema de Gestão para Cooperativa Agropecuária
 
+[![linter](https://github.com/joaoxaviersilva/agro-coop/actions/workflows/lint.yml/badge.svg)](https://github.com/joaoxaviersilva/agro-coop/actions/workflows/lint.yml)
+
 > 🟩 **Badge Verde (Passing):** Garante que o código está estável, seguro e compilando perfeitamente sem erros.
 
 ## Sobre o Projeto
