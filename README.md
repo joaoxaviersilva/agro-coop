@@ -1,23 +1,20 @@
 # Agro Coop - Sistema de Gestão para Cooperativa Agropecuária
 
-[![linter](https://github.com/joaoxaviersilva/agro-coop/actions/workflows/lint.yml/badge.svg)](https://github.com/joaoxaviersilva/agro-coop/actions/workflows/lint.yml)
-
 > 🟩 **Badge Verde (Passing):** Garante que o código está estável, seguro e compilando perfeitamente sem erros.
 
 ## Sobre o Projeto
 
 O **Agro Coop** é uma aplicação web desenvolvida utilizando o framework Laravel seguindo a arquitetura MVC (Model-View-Controller).
 
-O sistema foi criado como atividade prática da disciplina **Programação Web III (PWIII)** com o objetivo de simular o gerenciamento operacional de uma cooperativa agropecuária, permitindo o registro, controle e acompanhamento de safras recebidas dos cooperados.
+O sistema foi criado como atividade prática da disciplina **Programação Web III (PWIII)** com o objetivo de simular o gerenciamento operacional de uma cooperativa agropecuária, permitindo o registro, controle, edição e acompanhamento de safras recebidas dos cooperados.
 
 A aplicação possui módulos para:
 
-* Controle Operacional
-* Registro de Safras
-* Gestão de Lotes
-* Controle de Estoque
-* Monitoramento de Silos
-* Visualização de Indicadores Agrícolas
+* Controle Operacional Reativo
+* Registro e Gestão de Lotes (CRUD Completo)
+* Inteligência de Estoque e Volumetria Física
+* Monitoramento Dinâmico de Silos
+* Visualização de Indicadores Agrícolas e Cotações
 
 ---
 
@@ -47,27 +44,29 @@ Arquivo:
 
 ```php
 app/Models/Safra.php
+
 ```
 
 Tabela utilizada:
 
 ```sql
 safras
+
 ```
 
 Campos:
 
-| Campo            | Tipo      |
-| ---------------- | --------- |
-| id               | bigint    |
-| lote_codigo      | varchar   |
-| cooperado_nome   | varchar   |
-| safra_tipo       | varchar   |
-| safra_quantidade | double    |
-| classificacao    | varchar   |
-| status           | varchar   |
-| created_at       | timestamp |
-| updated_at       | timestamp |
+| Campo | Tipo |
+| --- | --- |
+| id | bigint |
+| lote_codigo | varchar |
+| cooperado_nome | varchar |
+| safra_tipo | varchar |
+| safra_quantidade | double |
+| classificacao | varchar |
+| status | varchar |
+| created_at | timestamp |
+| updated_at | timestamp |
 
 ---
 
@@ -77,80 +76,73 @@ Arquivo:
 
 ```php
 app/Http/Controllers/CooperativaController.php
+
 ```
 
-Responsável pela lógica de negócio do sistema.
+Responsável por centralizar toda a lógica de negócio do sistema.
 
 ### Método home()
 
-Renderiza a página inicial.
+Consulta e processa o acumulado físico do banco de dados (convertendo KG para Toneladas no caso de grãos) para alimentar os contadores da página inicial.
 
 ```php
 public function home()
-{
-    return view('home');
-}
-```
 
----
+```
 
 ### Método operation()
 
-Consulta todos os lotes cadastrados no banco de dados e envia para a view operacional.
+Carrega todos os lotes cadastrados e calcula dinamicamente o status de lotação dos Silos 01 e 02 com base no volume geral armazenado.
 
 ```php
 public function operation()
-{
-    $lotes = Safra::latest()->get();
 
-    return view('operation', compact('lotes'));
-}
 ```
-
----
 
 ### Método stock()
 
-Renderiza a tela de mercado e estoque.
+Calcula a taxa de ocupação percentual e volumétrica do Silo Norte (Grãos) e Silo Sul (Pecuária) em tempo real, disparando travas visuais no front-end caso a capacidade passe do limite de segurança.
 
 ```php
 public function stock()
-{
-    return view('stock');
-}
-```
 
----
+```
 
 ### Método report()
 
-Renderiza o formulário de cadastro e exibe os últimos registros cadastrados.
+Renderiza o formulário de cadastro e exibe um mini-histórico lateral com os 3 últimos registros do banco.
 
 ```php
 public function report()
-{
-    $historico = Safra::latest()->take(3)->get();
 
-    return view('report', compact('historico'));
-}
 ```
-
----
 
 ### Método storeReport()
 
-Responsável pelo processamento do formulário.
-
-Funções executadas:
-
-* Validação dos dados.
-* Geração automática do código do lote.
-* Aplicação das regras de negócio.
-* Persistência dos dados no banco.
-* Redirecionamento para a tela operacional.
+Valida a entrada, gera um código de lote único baseado no ano corrente (`#LT-2026-XX`), aplica regras de classificação automática e persiste o registro no banco.
 
 ```php
 public function storeReport(Request $request)
+
+```
+
+### Métodos edit() e update()
+
+Módulo de atualização do CRUD. `edit()` busca o lote selecionado para preencher o formulário e `update()` valida e salva as correções operacionais efetuadas pelo usuário.
+
+```php
+public function edit($id)
+public function update(Request $request, $id)
+
+```
+
+### Método destroy()
+
+Módulo de exclusão física do CRUD. Remove o registro selecionado permanentemente da base de dados.
+
+```php
+public function destroy($id)
+
 ```
 
 ---
@@ -161,6 +153,7 @@ Migration:
 
 ```php
 database/migrations/create_safras_table.php
+
 ```
 
 Estrutura:
@@ -176,6 +169,7 @@ Schema::create('safras', function (Blueprint $table) {
     $table->string('status')->default('Pendente');
     $table->timestamps();
 });
+
 ```
 
 ---
@@ -186,203 +180,69 @@ Arquivo:
 
 ```php
 routes/web.php
+
 ```
 
-## Página Inicial
+## Páginas Principais e Leitura (Read)
 
-```php
-GET /
-```
+* `GET /` -> `home()` -> Nome: `coop.home` (Home com contadores dinâmicos)
+* `GET /operacoes` -> `operation()` -> Nome: `coop.operation` (Painel com tabela de lotes)
+* `GET /mercado` -> `stock()` -> Nome: `coop.stock` (Dashboard de volumetria e cotações)
+* `GET /relatorio` -> `report()` -> Nome: `coop.report` (Tela de cadastro)
 
-Controller:
+## Criação de Dados (Create)
 
-```php
-home()
-```
+* `POST /relatorio` -> `storeReport()` -> Nome: `coop.storeReport`
 
-Nome:
+## Atualização de Dados (Update)
 
-```php
-coop.home
-```
+* `GET /operacoes/{id}/editar` -> `edit()` -> Nome: `coop.edit` (Formulário de edição)
+* `PUT /operacoes/{id}` -> `update()` -> Nome: `coop.update` (Processa alteração)
 
----
+## Exclusão de Dados (Delete)
 
-## Operações
-
-```php
-GET /operacoes
-```
-
-Controller:
-
-```php
-operation()
-```
-
-Nome:
-
-```php
-coop.operation
-```
-
----
-
-## Mercado e Estoque
-
-```php
-GET /mercado
-```
-
-Controller:
-
-```php
-stock()
-```
-
-Nome:
-
-```php
-coop.stock
-```
-
----
-
-## Relatório
-
-```php
-GET /relatorio
-```
-
-Controller:
-
-```php
-report()
-```
-
-Nome:
-
-```php
-coop.report
-```
-
----
-
-## Cadastro de Safras
-
-```php
-POST /relatorio
-```
-
-Controller:
-
-```php
-storeReport()
-```
-
-Nome:
-
-```php
-coop.storeReport
-```
-
----
+* `DELETE /operacoes/{id}` -> `destroy()` -> Nome: `coop.destroy`
 
 ## Tratamento de Erros
 
-```php
-Route::fallback(...)
-```
-
-Responsável pela exibição da página personalizada de erro 404.
+* `Route::fallback(...)` -> Captura requisições inválidas e renderiza uma view personalizada de erro 404.
 
 ---
 
 # Demonstração do Sistema
 
 ## Página Inicial
-
 ![Página Inicial](img/print1.png)
 
----
-
-## Controle Operacional
-
+## Controle Operacional & Ações do CRUD
 ![Controle Operacional](img/print2.png)
 
----
-
-## Mercado e Estoque
-
+## Mercado, Cotações & Ocupação de Silos
 ![Mercado e Estoque](img/print3.png)
 
----
-
 ## Cadastro de Safras
-
 ![Cadastro de Safras](img/print4.png)
 
 ---
 
-# Instalação
+# Instalação e Execução
 
-Clone o repositório:
+Para rodar o projeto localmente, execute a sequência de passos abaixo no seu terminal de comando:
 
-```bash
-git clone https://github.com/joaoxaviersilva/agro-coop.git
-```
+1. **Clonar o Repositório:** git clone https://github.com/joaoxaviersilva/agro-coop.git
+2. **Acessar a Pasta:** cd agro-coop
+3. **Instalar Dependências:** composer install
+4. **Criar Configuração de Ambiente:** cp .env.example .env
+5. **Gerar Chave de Segurança:** php artisan key:generate
+6. **Configuração da Base de Dados:** Abra o arquivo .env criado e ajuste as credenciais do seu MySQL local.
+7. **Rodar Estrutura de Tabelas:** php artisan migrate
+8. **Subir Servidor do Laravel:** php artisan serve
 
-Acesse a pasta:
-
-```bash
-cd agro-coop
-```
-
-Instale as dependências:
-
-```bash
-composer install
-```
-
-Copie o arquivo de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-Gere a chave da aplicação:
-
-```bash
-php artisan key:generate
-```
-
-Configure o banco de dados no arquivo:
-
-```env
-.env
-```
-
-Execute as migrations:
-
-```bash
-php artisan migrate
-```
-
-Inicie o servidor:
-
-```bash
-php artisan serve
-```
-
-Acesse:
-
-```text
-http://127.0.0.1:8000
-```
+Após concluir a execução dos passos, abra o seu navegador de internet e digite o endereço local: http://127.0.0.1:8000
 
 ---
 
-# Estrutura Simplificada
+# Estrutura Simplificada do Projeto
 
 ```text
 app
@@ -401,6 +261,7 @@ resources
 └── views
     ├── home.blade.php
     ├── operation.blade.php
+    ├── edit.blade.php
     ├── report.blade.php
     ├── stock.blade.php
     └── errors
@@ -410,22 +271,18 @@ resources
 
 routes
 └── web.php
+
 ```
 
 ---
 
-# Funcionalidades
+# Principais Funcionalidades Implementadas
 
-* Cadastro de cooperados.
-* Registro de safras.
-* Geração automática de lotes.
-* Classificação automática de produtos.
-* Controle operacional.
-* Histórico de movimentações.
-* Monitoramento de estoque.
-* Indicadores agrícolas.
-* Tratamento de erro 404 personalizado.
-* Persistência de dados em banco relacional.
+* **CRUD Ciclo Completo:** Mecanismos de cadastro, listagem, edição rápida de pátio e exclusão com caixas de confirmação nativas.
+* **Geração Inteligente de Lotes:** Identificadores gerados de maneira procedural via string contendo o ano civil atual.
+* **Lógica de Negócio Dinâmica (Back-to-Front):** O status das unidades físicas (Silos e Frigorífico) muda de cor e texto com base nas somas e pendências de documentos reais do MySQL.
+* **Barras de Progresso Nativas:** Gráficos de capacidade renderizados de forma matemática via Blade style strings e Tailwind CSS, sem dependência de bibliotecas externas de JavaScript.
+* **Tratamento de Erros:** Middleware de fallback interceptando rotas inexistentes com layout customizado da aplicação.
 
 ---
 
