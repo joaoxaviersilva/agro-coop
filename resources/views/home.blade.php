@@ -58,34 +58,53 @@
                 </h3>
                 
                 <div class="grid gap-3 sm:grid-cols-2 flex-1">
-                    <!-- Indicador 1: Armazenamento -->
+                    <!-- Indicador 1: Milho -->
                     <div class="rounded-2xl border border-farm-200 bg-farm-100 p-4">
-                        <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Milho (Armazenado)</span>
-                        <p class="mt-2 text-3xl font-extrabold text-farm-900">4,250 <span class="text-sm font-medium">ton</span></p>
+                        <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Milho em Grão</span>
+                        <p class="mt-2 text-3xl font-extrabold text-farm-900">
+                            {{ number_format($totalMilho, 1, ',', '.') }} <span class="text-sm font-medium">ton</span>
+                        </p>
                         <div class="mt-3 w-full bg-farm-300 rounded-full h-1.5">
-                            <div class="bg-pasture-700 h-1.5 rounded-full" style="width: 70%"></div>
+                            <div class="bg-pasture-700 h-1.5 rounded-full" style="width: {{ min(($totalMilho / 10000) * 100, 100) }}%"></div>
                         </div>
                     </div>
 
-                    <!-- Indicador 2: Pecuária -->
+                    <!-- Indicador 2: Soja -->
+                    <div class="rounded-2xl border border-farm-200 bg-farm-100 p-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Soja Comercial</span>
+                        <p class="mt-2 text-3xl font-extrabold text-farm-900">
+                            {{ number_format($totalSoja, 1, ',', '.') }} <span class="text-sm font-medium">ton</span>
+                        </p>
+                        <div class="mt-3 w-full bg-farm-300 rounded-full h-1.5">
+                            <div class="bg-pasture-700 h-1.5 rounded-full" style="width: {{ min(($totalSoja / 10000) * 100, 100) }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Indicador 3: Pecuária -->
                     <div class="rounded-2xl border border-farm-200 bg-farm-100 p-4">
                         <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Pecuária de Corte</span>
-                        <p class="mt-2 text-3xl font-extrabold text-farm-900">1,820 <span class="text-sm font-medium">cab</span></p>
-                        <span class="mt-2 inline-flex items-center rounded-md bg-pasture-100 px-2 py-0.5 text-xs font-medium text-pasture-800">Manejo Sanitário OK</span>
+                        <p class="mt-2 text-3xl font-extrabold text-farm-900">
+                            {{ number_format($totalPecuaria, 0, ',', '.') }} <span class="text-sm font-medium">cab</span>
+                        </p>
+                        
+                        @if($hasPendenciaPecuaria)
+                            <!-- Badge se houver lotes aguardando liberação -->
+                            <span class="mt-2 inline-flex items-center rounded-md bg-barn-50 px-2 py-0.5 text-xs font-medium text-barn-800">Aguardando GTA / Liberação</span>
+                        @else
+                            <!-- Badge padrão se tudo estiver regularizado -->
+                            <span class="mt-2 inline-flex items-center rounded-md bg-pasture-100 px-2 py-0.5 text-xs font-medium text-pasture-800">Manejo Sanitário OK</span>
+                        @endif
                     </div>
 
-                    <!-- Indicador 3: Insumos -->
+                    <!-- Indicador 4: Trigo -->
                     <div class="rounded-2xl border border-farm-200 bg-farm-100 p-4">
-                        <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Insumos Disponíveis</span>
-                        <p class="mt-2 text-3xl font-extrabold text-farm-900">92 <span class="text-sm font-medium">itens</span></p>
-                        <span class="mt-2 inline-flex items-center rounded-md bg-barn-50 px-2 py-0.5 text-xs font-medium text-barn-800">Estoque Regularizado</span>
-                    </div>
-
-                    <!-- Indicador 4: Informativo de Próxima Safra -->
-                    <div class="rounded-2xl border border-farm-200 bg-farm-100 p-4 flex flex-col justify-center items-center text-center">
-                        <span class="text-2xl">🌱</span>
-                        <p class="mt-1 text-xs font-semibold text-farm-900">Próxima Safra</p>
-                        <p class="text-[11px] text-farm-600">Planejamento e distribuição de sementes liberados.</p>
+                        <span class="text-xs font-bold uppercase tracking-wider text-farm-600">Trigo Especial</span>
+                        <p class="mt-2 text-3xl font-extrabold text-farm-900">
+                            {{ number_format($totalTrigo, 1, ',', '.') }} <span class="text-sm font-medium">ton</span>
+                        </p>
+                        <div class="mt-3 w-full bg-farm-300 rounded-full h-1.5">
+                            <div class="bg-pasture-700 h-1.5 rounded-full" style="width: {{ min(($totalTrigo / 10000) * 100, 100) }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>

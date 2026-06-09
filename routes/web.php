@@ -7,7 +7,8 @@
 |
 | COMENTÁRIO TÉCNICO: Substituímos o retorno direto de views (Route::view) por chamadas de métodos 
 | do Controller (CooperativaController::class). Isso segue o padrão MVC do Laravel, permitindo 
-| injetar os dados vindos do banco de dados antes da renderização das telas.
+| injetar os dados vindos do banco de dados antes da renderização das telas. Incluímos as rotas
+| RESTful para edição, atualização e exclusão física para fechar o ciclo do CRUD.
 |--------------------------------------------------------------------------
 */
 
@@ -22,6 +23,11 @@ Route::get('/relatorio', [CooperativaController::class, 'report'])->name('coop.r
 
 // Rota POST para processar e gravar os dados do formulário de safras
 Route::post('/relatorio', [CooperativaController::class, 'storeReport'])->name('coop.storeReport');
+
+// NOVAS ROTAS OPERACIONAIS: Implementação do ciclo Update e Delete do CRUD
+Route::get('/operacoes/{id}/editar', [CooperativaController::class, 'edit'])->name('coop.edit');
+Route::put('/operacoes/{id}', [CooperativaController::class, 'update'])->name('coop.update');
+Route::delete('/operacoes/{id}', [CooperativaController::class, 'destroy'])->name('coop.destroy');
 
 // Rota Fallback para capturar erros 404 e exibir a view personalizada
 Route::fallback(function () {

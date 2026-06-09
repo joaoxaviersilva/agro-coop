@@ -5,9 +5,9 @@
     COMENTÁRIO TÉCNICO: Esta view renderiza os dados operacionais através de uma tabela HTML
     estruturada com Tailwind CSS para garantir responsividade no mobile. Os status das unidades
     são controlados visualmente através de badges coloridas (pasture para OK, barn para alertas).
-    As duas seções do topo foram alinhadas com lg:items-stretch para garantir simetria visual.
     Os registros da tabela são carregados dinamicamente através do Eloquent ORM utilizando a
-    coleção $lotes enviada pelo CooperativaController, seguindo o padrão MVC do Laravel.
+    coleção $lotes enviada pelo CooperativaController. Adicionamos a coluna de ações que fecha
+    o ciclo CRUD integrado do projeto escolar (Edit/Delete) com alinhamento flexível.
 --}}
 
 @extends('layouts.app')
@@ -17,10 +17,8 @@
 @section('content')
     <section class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 py-12 lg:px-8 lg:py-16">
 
-        <!-- CABEÇALHO OPERACIONAL: Resumo da movimentação do pátio e status das unidades -->
         <div class="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-stretch">
 
-            <!-- Painel de Controle Operacional -->
             <div class="rounded-3xl border border-farm-300 bg-farm-100 p-6 flex flex-col justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase text-barn-700">
@@ -38,7 +36,6 @@
                 </p>
             </div>
 
-            <!-- Painel de Status dos Silos e Armazéns -->
             <div class="rounded-3xl border border-pasture-300 bg-pasture-50 p-6 flex flex-col justify-between">
                 <h2 class="text-base font-bold text-pasture-900 mb-4">
                     Status dos Silos & Armazéns
@@ -48,22 +45,22 @@
 
                     <div class="rounded-xl border border-pasture-200 bg-farm-50 p-3 flex justify-between items-center shadow-sm">
                         <span class="text-xs font-semibold text-farm-800">Silo Grãos 01</span>
-                        <span class="bg-pasture-500 text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Disponível
+                        <span class="{{ $statusSilo01 === 'Capacidade Limite' ? 'bg-barn-600' : 'bg-pasture-500' }} text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {{ $statusSilo01 }}
                         </span>
                     </div>
 
                     <div class="rounded-xl border border-pasture-200 bg-farm-50 p-3 flex justify-between items-center shadow-sm">
                         <span class="text-xs font-semibold text-farm-800">Silo Grãos 02</span>
-                        <span class="bg-barn-600 text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Capacidade Limite
+                        <span class="{{ $statusSilo02 === 'Capacidade Limite' ? 'bg-barn-600' : 'bg-pasture-500' }} text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {{ $statusSilo02 }}
                         </span>
                     </div>
 
                     <div class="rounded-xl border border-pasture-200 bg-farm-50 p-3 flex justify-between items-center shadow-sm">
                         <span class="text-xs font-semibold text-farm-800">Frigorífico Central</span>
-                        <span class="bg-pasture-500 text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Manejo OK
+                        <span class="{{ $statusFrigorifico === 'Retido / Triagem' ? 'bg-barn-600' : 'bg-pasture-500' }} text-farm-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {{ $statusFrigorifico }}
                         </span>
                     </div>
 
@@ -78,14 +75,12 @@
             </div>
         </div>
 
-        <!-- ALERTA DE SUCESSO: Exibido após o cadastro de um novo lote -->
         @if(session('sucesso'))
             <div class="rounded-2xl border border-pasture-300 bg-pasture-100 p-4 text-sm font-semibold text-pasture-800 shadow-sm">
                 {{ session('sucesso') }}
             </div>
         @endif
 
-        <!-- TABELA OPERACIONAL: Exibição dinâmica dos lotes registrados no banco -->
         <div class="rounded-3xl border border-farm-300 bg-farm-50 p-6 overflow-hidden">
 
             <h3 class="text-lg font-bold text-farm-900 mb-4">
@@ -104,6 +99,7 @@
                             <th class="pb-3 font-semibold">Peso Líquido</th>
                             <th class="pb-3 font-semibold">Classificação</th>
                             <th class="pb-3 font-semibold">Status</th>
+                            <th class="pb-3 font-semibold text-right">Ações</th>
                         </tr>
                     </thead>
 
@@ -111,50 +107,60 @@
 
                         @forelse($lotes as $lote)
 
-                            <tr>
+                            <tr class="hover:bg-farm-100/40 transition">
 
-                                <td class="py-4 font-mono font-bold text-pasture-700">
+                                <td class="py-4 font-mono font-bold text-pasture-700 align-middle">
                                     {{ $lote->lote_codigo }}
                                 </td>
 
-                                <td class="py-4 font-medium">
+                                <td class="py-4 font-medium align-middle">
                                     {{ $lote->cooperado_nome }}
                                 </td>
 
-                                <td class="py-4">
-                                    {{ ucfirst($lote->safra_tipo) }}
+                                <td class="py-4 capitalize align-middle">
+                                    {{ $lote->safra_tipo }}
                                 </td>
 
-                                <td class="py-4">
+                                <td class="py-4 align-middle">
                                     {{ number_format($lote->safra_quantidade, 0, ',', '.') }}
                                 </td>
 
-                                <td class="py-4">
+                                <td class="py-4 align-middle">
                                     {{ $lote->classificacao }}
                                 </td>
 
-                                <td class="py-4">
-
+                                <td class="py-4 align-middle">
                                     @if($lote->status === 'Descarregado')
-
                                         <span class="bg-pasture-100 text-pasture-800 text-[11px] font-bold px-2 py-1 rounded-md">
                                             {{ $lote->status }}
                                         </span>
-
                                     @elseif($lote->status === 'Aguardando GTA')
-
                                         <span class="bg-barn-50 text-barn-700 text-[11px] font-bold px-2 py-1 rounded-md">
                                             {{ $lote->status }}
                                         </span>
-
                                     @else
-
                                         <span class="bg-farm-200 text-farm-800 text-[11px] font-bold px-2 py-1 rounded-md">
                                             {{ $lote->status }}
                                         </span>
-
                                     @endif
+                                </td>
 
+                                <td class="py-4 text-right align-middle">
+                                    <div class="flex justify-end items-center gap-2 h-full">
+                                        <a href="{{ route('coop.edit', $lote->id) }}" 
+                                           class="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold rounded-lg bg-pasture-100 text-pasture-700 hover:bg-pasture-200 hover:text-pasture-900 transition shadow-sm">
+                                            Editar
+                                        </a>
+
+                                        <form action="{{ route('coop.destroy', $lote->id) }}" method="POST" class="inline-block m-0" onsubmit="return confirm('Tem certeza que deseja remover permanentemente este lote de carga?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    class="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold rounded-lg bg-barn-50 text-barn-600 hover:bg-barn-100 hover:text-barn-800 transition shadow-sm">
+                                                Excluir
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
 
                             </tr>
@@ -162,7 +168,7 @@
                         @empty
 
                             <tr>
-                                <td colspan="6" class="py-10 text-center text-farm-600">
+                                <td colspan="7" class="py-10 text-center text-farm-600">
                                     Nenhum lote registrado até o momento.
                                 </td>
                             </tr>
